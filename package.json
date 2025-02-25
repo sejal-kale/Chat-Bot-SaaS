@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is an AI Chatbot application, inspired by ChatGPT, by using MERN Stack and OpenAI",
   "main": "index.ts",
   "type": "module",
   "scripts": {
