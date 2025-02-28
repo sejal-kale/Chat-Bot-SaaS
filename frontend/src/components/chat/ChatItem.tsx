@@ -4,201 +4,102 @@ import { useAuth } from "../../context/AuthContext";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-// Function to extract code blocks from a message string
-function extractCodeFromString(message: string): string[] {
-  if (message.includes("```")) {
-    const blocks = message.split("```");
-    return blocks.filter(block => block.trim() !== ""); // filter out empty strings if any
-  }
-  return [];
+// Type for extracted code blocks
+interface CodeBlock {
+  language: string;
+  code: string;
 }
 
-// Function to check if a string is a code block
-function isCodeBlock(str: string): boolean {
-  const codePatterns = [
-    /[\{\}\[\]\(\)]/, // Matches curly braces, square brackets, and parentheses
-    /\bfunction\b/,    // Matches the word "function"
-    /\blet\b/,         // Matches the word "let"
-    /\bconst\b/,       // Matches the word "const"
-    /\bvar\b/,         // Matches the word "var"
-    /\breturn\b/,      // Matches the word "return"
-    /\bclass\b/,       // Matches the word "class"
-    /\bimport\b/,      // Matches the word "import"
-    /\bexport\b/,      // Matches the word "export"
-    /[\+\-\*\/\=\!]/,   // Matches common operators
-    /\/\/.*$/,         // Matches single-line comments (//)
-    /\/\*[\s\S]*\*\//  // Matches multi-line comments (/* */)
+// Extracts code blocks from a text
+const extractCodeBlocks = (text: string): CodeBlock[] => {
+  text = text.replace(/\[\d+\]\s?/g, ""); // Remove line numbers
+  text = text.replace(/<code><\/code>`/g, "```"); // Fix broken <code> tags
+
+  const regex = /```(\w+)?\n([\s\S]*?)```/g;
+  let match;
+  let extracted: CodeBlock[] = [];
+
+  while ((match = regex.exec(text)) !== null) {
+    let language = match[1] || "plaintext"; // Default to plaintext if no language
+    let code = match[2].trim();
+    extracted.push({ language, code });
+  }
+
+  return extracted;
+};
+
+// Check if a given string is a code block
+const isCodeBlock = (str: string): boolean => {
+  const patterns = [
+    /[\{\}\[\]\(\)]/, // Braces, brackets, parentheses
+    /\b(function|let|const|var|return|class|import|export)\b/, // Keywords
+    /[\+\-\*\/\=\!]/, // Operators
+    /\/\/.*$/, // Single-line comments
+    /\/\*[\s\S]*?\*\// // Multi-line comments
   ];
+  
+  return patterns.some(pattern => pattern.test(str));
+};
 
-  // Check if any code pattern is present in the string
-  for (let pattern of codePatterns) {
-    if (pattern.test(str)) {
-      return true; // It's a code block
-    }
-  }
-
-  return false; // Not a code block
-}
-
-// Function to check if the message contains HTML tags
-function containsHTML(str: string): boolean {
-  const htmlTagRegex = /<\/?[a-z][\s\S]*>/i; // A simple regex to detect HTML tags
+// Check if a string contains HTML
+const containsHTML = (str: string): boolean => {
+  const htmlTagRegex = /<\/?[a-z][\s\S]*>/i;
   return htmlTagRegex.test(str);
-}
+};
 
+// Props for ChatItem component
 interface ChatItemProps {
   content: string;
   role: "user" | "assistant";
 }
 
 const ChatItem: React.FC<ChatItemProps> = ({ content, role }) => {
-  const messageBlocks = extractCodeFromString(content); // Extract code blocks from the message
-  const auth = useAuth(); // Get user data
-
-  // Check if the content contains HTML
+  const auth = useAuth();
+  const messageBlocks = extractCodeBlocks(content);
   const hasHTML = containsHTML(content);
 
-  return role === "assistant" ? (
+  return (
     <Box
       sx={{
         display: "flex",
         p: 2,
-        bgcolor: "#004d5612",
+        bgcolor: role === "assistant" ? "#004d5612" : "#004d56",
         gap: 2,
         borderRadius: 2,
         my: 1,
       }}
     >
-      <Avatar sx={{ ml: "0" }}>
-        <img src="openai.png" alt="openai" width={"30px"} />
-      </Avatar>
-      <Box>
-        {/* Render the message, checking for code blocks or HTML */}
-        {messageBlocks.length === 0 ? (
-          hasHTML ? (
-            <Typography
-              sx={{
-                fontSize: "20px",
-                whiteSpace: "pre-line", // Ensures line breaks are respected
-                marginBottom: "10px", // Adds spacing after each sentence
-              }}
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
-          ) : (
-            <Typography
-              sx={{
-                fontSize: "20px",
-                whiteSpace: "pre-line", // Ensures line breaks are respected
-                marginBottom: "10px", // Adds spacing after each sentence
-              }}
-            >
-              {content}
-            </Typography>
-          )
+      <Avatar sx={{ ml: "0", bgcolor: role === "assistant" ? "inherit" : "black", color: "white" }}>
+        {role === "assistant" ? (
+          <img src="openai.png" alt="openai" width={"30px"} />
         ) : (
-          messageBlocks.map((block, index) =>
-            isCodeBlock(block) ? (
-              <SyntaxHighlighter
-                key={index}
-                style={coldarkDark}
-                language="javascript"
-              >
-                {block}
-              </SyntaxHighlighter>
-            ) : hasHTML ? (
-              <Typography
-                key={index}
-                sx={{
-                  fontSize: "20px",
-                  whiteSpace: "pre-line", // Ensures line breaks are respected
-                  marginBottom: "10px", // Adds spacing after each sentence
-                }}
-                dangerouslySetInnerHTML={{ __html: block }}
-              />
-            ) : (
-              <Typography
-                key={index}
-                sx={{
-                  fontSize: "20px",
-                  whiteSpace: "pre-line", // Ensures line breaks are respected
-                  marginBottom: "10px", // Adds spacing after each sentence
-                }}
-              >
-                {block}
-              </Typography>
-            )
-          )
+          <>
+            {auth?.user?.name[0]}
+            {auth?.user?.name.split(" ")[1]?.[0]}
+          </>
         )}
-      </Box>
-    </Box>
-  ) : (
-    <Box
-      sx={{
-        display: "flex",
-        p: 2,
-        bgcolor: "#004d56",
-        gap: 2,
-        borderRadius: 2,
-      }}
-    >
-      <Avatar sx={{ ml: "0", bgcolor: "black", color: "white" }}>
-        {auth?.user?.name[0]}
-        {auth?.user?.name.split(" ")[1][0]}
       </Avatar>
+
       <Box>
-        {/* Render the message, checking for code blocks or HTML */}
+        {/* If no code blocks, render normal text */}
         {messageBlocks.length === 0 ? (
           hasHTML ? (
-            <Typography
-              sx={{
-                fontSize: "20px",
-                whiteSpace: "pre-line", // Ensures line breaks are respected
-                marginBottom: "10px", // Adds spacing after each sentence
-              }}
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            <Typography sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }} dangerouslySetInnerHTML={{ __html: content }} />
           ) : (
-            <Typography
-              sx={{
-                fontSize: "20px",
-                whiteSpace: "pre-line", // Ensures line breaks are respected
-                marginBottom: "10px", // Adds spacing after each sentence
-              }}
-            >
-              {content}
-            </Typography>
+            <Typography sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }}>{content}</Typography>
           )
         ) : (
           messageBlocks.map((block, index) =>
-            isCodeBlock(block) ? (
-              <SyntaxHighlighter
-                key={index}
-                style={coldarkDark}
-                language="javascript"
-              >
-                {block}
-              </SyntaxHighlighter>
+            isCodeBlock(block.code) ? (
+              <Box key={index} sx={{ bgcolor: "#282c34", p: 2, borderRadius: 1, mb: 1 }}>
+                <SyntaxHighlighter language={block.language} style={coldarkDark}>
+                  {block.code}
+                </SyntaxHighlighter>
+              </Box>
             ) : hasHTML ? (
-              <Typography
-                key={index}
-                sx={{
-                  fontSize: "20px",
-                  whiteSpace: "pre-line", // Ensures line breaks are respected
-                  marginBottom: "10px", // Adds spacing after each sentence
-                }}
-                dangerouslySetInnerHTML={{ __html: block }}
-              />
+              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }} dangerouslySetInnerHTML={{ __html: block.code }} />
             ) : (
-              <Typography
-                key={index}
-                sx={{
-                  fontSize: "20px",
-                  whiteSpace: "pre-line", // Ensures line breaks are respected
-                  marginBottom: "10px", // Adds spacing after each sentence
-                }}
-              >
-                {block}
-              </Typography>
+              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }}>{block.code}</Typography>
             )
           )
         )}
