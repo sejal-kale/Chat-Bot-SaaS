@@ -1,11 +1,14 @@
 import User from "../models/User.js";
-import { OpenAIApi } from "openai";
-import { configureOpenAI } from '../config/openai-config.js';
+// import { configureOpenAI } from '../config/openai-config.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
+import { processGeminiResponse } from "../config/Process.js";
+dotenv.config();
 export const generateChatCompletion = async (req, res, next) => {
+    console.log("object");
     const { message } = req.body;
+    console.log("whats app");
     try {
-        console.log(res.locals.jwtData.id);
-        console.log("hellooo");
         const user = await User.findById(res.locals.jwtData.id);
         if (!user)
             return res
@@ -18,17 +21,26 @@ export const generateChatCompletion = async (req, res, next) => {
         }));
         chats.push({ content: message, role: "user" });
         user.chats.push({ content: message, role: "user" });
-        // send all chats with new one to openAI API
-        const config = configureOpenAI();
-        const openai = new OpenAIApi(config);
-        // get latest response
-        const chatResponse = await openai.createChatCompletion({
-            model: "gpt-3.5-turbo",
-            messages: chats,
-        });
-        console.log("chat response ", chatResponse);
-        user.chats.push(chatResponse.data.choices[0].message);
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        console.log("model ", model);
+        const result = await model.generateContent(message);
+        const formattedMessage = processGeminiResponse(result.response.text());
+        console.log("helloooo", result.response.text());
+        user.chats.push({ content: formattedMessage, role: "assistant" });
+        console.log("fomated  ", formattedMessage);
         await user.save();
+        // // send all chats with new one to openAI API
+        // const config = configureOpenAI();
+        // const openai = new OpenAIApi(config);
+        // // get latest response
+        // const chatResponse = await openai.createChatCompletion({
+        //     model: "gpt-3.5-turbo",
+        //     messages: chats,
+        // });
+        // console.log("chat response ", chatResponse);
+        // user.chats.push(chatResponse.data.choices[0].message);
+        // await user.save();
         return res.status(200).json({ chats: user.chats });
     }
     catch (error) {
@@ -73,4 +85,5 @@ export const deleteChats = async (req, res, next) => {
         return res.status(200).json({ message: "ERROR", cause: error.message });
     }
 };
+//# sourceMappingURL=chats.controller.js.map
 //# sourceMappingURL=chats.controller.js.map

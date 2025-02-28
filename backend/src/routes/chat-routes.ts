@@ -9,7 +9,7 @@ import {
   
 
 const chatRouter=Router();
-console.log("hichat user")
+console.log("i am chatroute")
 chatRouter.post(
     "/new",
     validate(chatCompletionValidator),

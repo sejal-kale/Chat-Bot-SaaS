@@ -1,0 +1,26 @@
+.typing-animation {
+    font-size: 60px;
+    color: white;
+    display: inline-block;
+    text-shadow: 1px 1px 20px #000;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 4px solid rgba(255, 255, 255, 0.75);
+    animation: typing 4s steps(30) 1s 1 normal both, blinkCaret 0.75s step-end infinite;
+  }
+  
+  @keyframes typing {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+  
+  @keyframes blinkCaret {
+    50% {
+      border-color: transparent;
+    }
+  }
+  
