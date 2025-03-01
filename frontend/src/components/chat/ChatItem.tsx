@@ -37,7 +37,7 @@ const isCodeBlock = (str: string): boolean => {
     /\/\/.*$/, // Single-line comments
     /\/\*[\s\S]*?\*\// // Multi-line comments
   ];
-  
+
   return patterns.some(pattern => pattern.test(str));
 };
 
@@ -92,14 +92,16 @@ const ChatItem: React.FC<ChatItemProps> = ({ content, role }) => {
           messageBlocks.map((block, index) =>
             isCodeBlock(block.code) ? (
               <Box key={index} sx={{ bgcolor: "#282c34", p: 2, borderRadius: 1, mb: 1 }}>
-                <SyntaxHighlighter language={block.language} style={coldarkDark}>
+                <SyntaxHighlighter language={block.language} style={coldarkDark} wrapLongLines={true}>
                   {block.code}
                 </SyntaxHighlighter>
               </Box>
             ) : hasHTML ? (
-              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }} dangerouslySetInnerHTML={{ __html: block.code }} />
+              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", 
+              wordBreak: "break-word", mb: 1 }} dangerouslySetInnerHTML={{ __html: block.code }} />
             ) : (
-              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", mb: 1 }}>{block.code}</Typography>
+              <Typography key={index} sx={{ fontSize: "20px", whiteSpace: "pre-line", wordBreak: "break-word", 
+              overflowWrap: "break-word",  mb: 1 }}>{block.code}</Typography>
             )
           )
         )}

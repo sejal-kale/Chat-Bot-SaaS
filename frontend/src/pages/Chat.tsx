@@ -17,24 +17,34 @@ type Message = {
   content: string;
 };
 const Chat = () => {
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const auth = useAuth();
   const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
+  
+
   const handleSubmit = async () => {
     const content = inputRef.current?.value as string;
-    console.log("content ",content)
+    console.log("content ", content);
     if (inputRef && inputRef.current) {
       inputRef.current.value = "";
     }
     const newMessage: Message = { role: "user", content };
     setChatMessages((prev) => [...prev, newMessage]);
     const chatData = await sendChatRequest(content);
-    console.log("chatdata",chatData)
-    // console.log("chatdata chats",chatData.chats)
+    console.log("chatdata", chatData);
     setChatMessages([...chatData.chats]);
-    //
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -42,7 +52,6 @@ const Chat = () => {
       handleSubmit();
     }
   };
-
 
   const handleDeleteChats = async () => {
     try {
@@ -55,6 +64,7 @@ const Chat = () => {
       toast.error("Deleting chats failed", { id: "deletechats" });
     }
   };
+
   useLayoutEffect(() => {
     if (auth?.isLoggedIn && auth.user) {
       toast.loading("Loading Chats", { id: "loadchats" });
@@ -69,16 +79,16 @@ const Chat = () => {
         });
     }
   }, [auth]);
+
   useEffect(() => {
     const checkAuth = async () => {
       if (!auth?.user) {
         navigate("/login");
       }
     };
+    checkAuth();
+  }, [auth]);
 
-    checkAuth(); // Call the async function
-
-  }, [auth]); 
   return (
     <Box
       sx={{
@@ -124,7 +134,7 @@ const Chat = () => {
             You are talking to a ChatBOT
           </Typography>
           <Typography sx={{ mx: "auto", fontFamily: "work sans", my: 4, p: 3 }}>
-            You can ask some questions related to Knowledge, Business, Advices,
+            You can ask some questions related to Knowledge, Business, Advice,
             Education, etc. But avoid sharing personal information
           </Typography>
           <Button
@@ -173,17 +183,18 @@ const Chat = () => {
             mx: "auto",
             display: "flex",
             flexDirection: "column",
-            overflow: "scroll",
-            overflowX: "hidden",
             overflowY: "auto",
+            overflowX: "hidden",
             scrollBehavior: "smooth",
+            wordBreak: "break-word",
           }}
         >
           {chatMessages.map((chat, index) => (
-            //@ts-ignore
             <ChatItem content={chat.content} role={chat.role} key={index} />
-            // <pre>{chat.content}</pre>
           ))}
+
+<div ref={messagesEndRef} />
+
         </Box>
         <div
           style={{
@@ -194,10 +205,8 @@ const Chat = () => {
             margin: "auto",
           }}
         >
-          {" "}
           <input
-                  onKeyDown={handleKeyPress} 
-
+            onKeyDown={handleKeyPress}
             ref={inputRef}
             type="text"
             style={{
@@ -210,7 +219,7 @@ const Chat = () => {
               fontSize: "20px",
             }}
           />
-          <IconButton  onClick={handleSubmit} sx={{ color: "white", mx: 1 }}>
+          <IconButton onClick={handleSubmit} sx={{ color: "white", mx: 1 }}>
             <IoMdSend />
           </IconButton>
         </div>
