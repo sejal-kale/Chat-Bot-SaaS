@@ -20,7 +20,7 @@ async function disconnectFromDatabase() {
     } catch (error) {
         console.log(error);
 
-        throw new Error("Cannot disconnect from  Mongoose..!")
+        throw new Error("Cannot disconnected from  Mongoose..!")
 
     }
     
