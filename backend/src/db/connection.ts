@@ -8,7 +8,7 @@ import { connect, disconnect } from "mongoose";
     }
     catch(err){
         console.log(err.message);
-        throw new Error("Cannot connect to Mongoose..!")
+        throw new Error("Cannot connected to Mongoose..!")
     }
 
 }

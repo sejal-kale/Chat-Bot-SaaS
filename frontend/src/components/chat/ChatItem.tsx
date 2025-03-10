@@ -4,13 +4,13 @@ import { useAuth } from "../../context/AuthContext";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-// Type for extracted code blocks
+// Type for extracted code snippet 
 interface CodeBlock {
   language: string;
   code: string;
 }
 
-// Extracts code blocks from a text
+// Extracted code blocks from a text
 const extractCodeBlocks = (text: string): CodeBlock[] => {
   text = text.replace(/\[\d+\]\s?/g, ""); // Remove line numbers
   text = text.replace(/<code><\/code>`/g, "```"); // Fix broken <code> tags
